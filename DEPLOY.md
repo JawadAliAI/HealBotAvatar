@@ -2,115 +2,78 @@
 
 ## 🚀 Deployment Options
 
-### Option 1: Railway (Backend) + Vercel (Frontend) - Recommended
+This project is configured to be deployed as a single Docker container, which hosts both the Node.js backend and the React frontend.
 
-#### Deploy Backend to Railway:
+### Option 1: Render (Recommended)
 
-1. **Create Railway Account**
-   - Go to https://railway.app
-   - Sign up with GitHub
+Render is a unified cloud to build and run all your apps and websites.
 
-2. **Create New Project**
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Choose your repository
-   - Railway will auto-detect the Node.js app
+1.  **Create Render Account**
+    - Go to https://render.com
+    - Sign up with GitHub
 
-3. **Configure Environment**
-   - No environment variables needed (custom API is external)
-   - Railway will automatically install dependencies
+2.  **Create New Web Service**
+    - Click "New +" -> "Web Service"
+    - Connect your GitHub repository
+    - Render should automatically detect the `render.yaml` or `Dockerfile`.
+    - If asked, choose **Docker** as the runtime.
 
-4. **Deploy**
-   - Railway will build and deploy automatically
-   - Copy your Railway URL (e.g., `https://your-app.railway.app`)
+3.  **Configuration**
+    - **Name**: `healbot-avatar` (or your choice)
+    - **Region**: Choose one close to you
+    - **Branch**: `main`
+    - **Runtime**: Docker
+    - **Plan**: Free (or higher)
 
-#### Deploy Frontend to Vercel:
+4.  **Deploy**
+    - Click "Create Web Service"
+    - Render will build the Docker image (this may take a few minutes) and deploy it.
 
-1. **Create Vercel Account**
-   - Go to https://vercel.com
-   - Sign up with GitHub
+### Option 2: Hugging Face Spaces
 
-2. **Import Project**
-   - Click "New Project"
-   - Import your GitHub repository
-   - Framework Preset: Vite
-   - Root Directory: `apps/frontend`
+You can deploy this application to Hugging Face Spaces using their Docker SDK.
 
-3. **Configure Build Settings**
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
+1.  **Create Hugging Face Account**
+    - Go to https://huggingface.co
+    - Sign up
 
-4. **Add Environment Variable**
-   - Name: `VITE_API_URL`
-   - Value: Your Railway backend URL (e.g., `https://your-app.railway.app`)
+2.  **Create New Space**
+    - Click on your profile -> "New Space"
+    - **Space Name**: `healbot-avatar`
+    - **License**: MIT (optional)
+    - **SDK**: Docker
+    - **Hardware**: CPU Basic (Free) is usually sufficient, but Upgrade if needed for faster TTS.
 
-5. **Deploy**
-   - Click "Deploy"
-   - Vercel will build and deploy your frontend
+3.  **Upload Code**
+    - You can sync your GitHub repo with the Space, or push your code directly to the Space's repo.
+    - Ensure the `Dockerfile` is in the root directory.
 
-### Option 2: Railway Only (Full Stack)
-
-You can deploy both backend and frontend on Railway:
-
-1. **Deploy Backend** (same as above)
-
-2. **Deploy Frontend as Separate Service**
-   - Create another Railway service
-   - Point to same repo
-   - Root Directory: `apps/frontend`
-   - Build Command: `npm run build`
-   - Start Command: `npx serve -s dist -l $PORT`
-   - Add environment variable: `VITE_API_URL` = your backend URL
+4.  **Configuration**
+    - Hugging Face Spaces usually listen on port 7860. You might need to update the `Dockerfile` or `server.js` if HF doesn't map port 3000 automatically.
+    - **Note**: For Hugging Face, it is recommended to change the port in `apps/backend/server.js` to `7860` or use an environment variable.
+    - Add a variable `PORT` = `7860` in the Space Settings -> "Variables and secrets".
 
 ## 📋 Pre-Deployment Checklist
 
-- ✅ Removed OpenAI dependencies
-- ✅ Removed ElevenLabs dependencies  
-- ✅ Using custom API for chat
-- ✅ Using local Python TTS
-- ✅ Health check endpoint added
-- ✅ CORS enabled for all origins
+- ✅ Removed Vercel and Railway configurations
+- ✅ Added `Dockerfile` for multi-stage build
+- ✅ Added `render.yaml` for Render Blueprints
+- ✅ Backend serves Frontend static files
+- ✅ `edge-tts` and `ffmpeg` included in Docker image
 
-## 🔧 Important Notes
+## 🔧 Environment Variables
 
-### Python Requirement
-The backend uses Python for TTS. Make sure Python is available in your deployment environment:
-
-**For Railway:**
-- Add a `nixpacks.toml` file (Railway auto-detects Python)
-
-**For Render/Other:**
-- Use a buildpack that includes Python
-
-### Environment Variables
-
-**Backend:** None required (custom API URL is hardcoded)
-
-**Frontend:**
-- `VITE_API_URL` - Your backend URL
+**Render / Hugging Face:**
+- `PORT`: Defaults to `3000`. Set to `7860` for Hugging Face if needed.
 
 ## 🧪 Testing After Deployment
 
-1. Test backend health: `https://your-backend-url/health`
-2. Test frontend: `https://your-frontend-url`
-3. Send a message and verify avatar responds
+1.  Open your deployed URL (e.g., `https://healbot-avatar.onrender.com` or `https://huggingface.co/spaces/username/healbot-avatar`)
+2.  The frontend should load.
+3.  Send a message. The backend should process it using `edge-tts` and return the audio and animation.
 
 ## 🆘 Troubleshooting
 
-**Backend Issues:**
-- Check Railway logs for Python errors
-- Verify `/health` endpoint returns 200
-- Check if TTS script is executable
-
-**Frontend Issues:**
-- Verify `VITE_API_URL` is set correctly
-- Check browser console for CORS errors
-- Ensure backend URL doesn't have trailing slash
-
-## 📱 URLs After Deployment
-
-**Backend:** `https://your-app.railway.app`  
-**Frontend:** `https://your-app.vercel.app`
-
-Share the frontend URL with anyone!
+- **Build Fails**: Check the logs. Ensure `ffmpeg` and `python` are correctly installed in the Docker image.
+- **Audio Issues**: If TTS fails, check if `edge-tts` is working. The logs will show python errors.
+- **Connection Refused**: Ensure the port matches the environment variable.
